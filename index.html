@@ -36,7 +36,7 @@
     let ringRotator;
     
     let animating = false;  // This is set to true when an animation is running.
-    
+    var pivot, spherex;
     
     /*  Create the scene graph.  This function is called once, as soon as the page loads.
      *  The renderer has already been created before this function is called.
@@ -87,12 +87,9 @@
                 shininess: 32
             })
         );
-        ring.position.x = 0;
-
-
         ringRotator = new THREE.Object3D();
         ringRotator.add(ring);
-        ringRotator.rotation.y = Math.PI/2;
+        ringRotator.rotation.y = 0;
         model.add(ringRotator);
        // ringRotator.castShadow = true;
         
@@ -104,13 +101,13 @@
                 shininess: 32
             })
         );
-        sphere.position.set(4,0,0);
+        sphere.position.set(0,0,0);
 
         sphereRotator = new THREE.Object3D();
         sphereRotator.add(sphere);
         model.add(sphereRotator);
 
-        let spherex = new THREE.Mesh(
+        spherex = new THREE.Mesh(
             new THREE.SphereGeometry(1.5,32,16),
             new THREE.MeshPhongMaterial({
                 color: '#ff0000',
@@ -118,17 +115,18 @@
                 shininess: 32
             })
         );
-        spherex.position.set(-4,0,0);
-
+        
         sphereRotatorx = new THREE.Object3D();
         model.add(sphereRotatorx);
         sphereRotatorx.add(spherex);
-        spherex.position.x = -5;
+        spherex.position.set(-2,0,0);
 
         const directionalLight = new THREE.DirectionalLight(0xffff00, 0.8);
         scene.add(directionalLight);
         directionalLight.position.set(-30, 50,0);
       //  directionalLight.castShadow = true;
+
+        scene.add(new THREE.AxesHelper(5));
         
 
         const gui = new dat.GUI();
@@ -178,25 +176,81 @@
      *  for that frame.
      */
 
-    let step = 0;
-    let speed = 0.01;
-    const xx = 4.045084971874737256/5;
-    console.log(xx);
+    let gravitation = 9.8;
+    let gravitationx = 19.6;
+    let bounce_distance = 4;
+    let bottom_position_y = 0;
+    let bounce_distancex = 8;
+    let bottom_position_x = 0;
+    let time_step = 0.01;  
+
+    let time_counter = Math.sqrt(bounce_distance * 2 / gravitation);
+    let time_counterx = Math.sqrt(bounce_distancex * 2 / gravitationx);
+    let timex_counter = time_counter - 0.91;
+    let timex_counterx = time_counterx - 0.91;
+    let initial_speed = gravitation * time_counter;
+    let initial_speedx = gravitationx * time_counterx;
+    var flag = 0;
+    var flagx = 0;
+
     //ringRotator.rotation.y = Math.PI/4;
 
     function updateForFrame() {
-        ringRotator.rotation.y += (Math.PI*speed);
-        step += speed;
-        sphereRotator.position.x = 5*(Math.sin(step*Math.PI)-xx);
-        sphereRotator.position.y = 2.5*Math.abs(Math.sin(step*Math.PI))+0.05;
-        //console.log(sphereRotator.position.x);
-        //console.log(sphereRotator.position.y);
-        //console.log(Math.sin(step), sphereRotator.position.x);\
-        //console.log(Math.sin(Math.PI));
-        // sphereRotatorx.position.z = 5*(Math.sin(step*Math.PI)-xx)+3;
-        // sphereRotatorx.position.x = 2.5*Math.abs(Math.sin(step*Math.PI))+3;
-        sphereRotatorx.rotateY(0.01);
-    
+        sphereRotatorx.rotation.y += 0.1;
+        ringRotator.rotation.y += (Math.PI*time_step*0.55);
+        if (sphereRotator.position.y < bottom_position_y) 
+        {
+            time_counter = 0;
+        }
+        sphereRotator.position.y = bottom_position_y + initial_speed * time_counter 
+        - 0.5 * gravitation * time_counter * time_counter;
+        
+        // sphereRotatorx.position.y = bottom_position_y + initial_speed * timex_counter 
+        // - 0.5 * gravitation * timex_counter * timex_counter;
+        
+
+
+        //kanan
+        if (sphereRotator.position.x < bottom_position_x && flag == 0) 
+        {
+            time_counterx = 0;
+            //timex_counterx = 0.91;
+            sphereRotator.position.x = bottom_position_x + initial_speedx * time_counterx 
+            - 0.5 * gravitationx * time_counterx * time_counterx;
+
+            // sphereRotatorx.position.z = bottom_position_x + initial_speedx * timex_counterx 
+            // - 0.5 * gravitationx * timex_counterx * timex_counterx;
+            flag = 1;
+        }
+        else if (flag == 1)
+        {
+            sphereRotator.position.x = -(bottom_position_x + initial_speedx * time_counterx 
+            - 0.5 * gravitationx * time_counterx * time_counterx);
+
+            // sphereRotatorx.position.z = -(bottom_position_x + initial_speedx * timex_counterx 
+            // - 0.5 * gravitationx * timex_counterx * timex_counterx);
+
+            if (sphereRotator.position.x > bottom_position_x)
+            {
+                flag = 0;
+                time_counterx = 0;
+                //timex_counterx = 0.91;
+            }
+        }
+        else
+        {
+            sphereRotator.position.x = bottom_position_x + initial_speedx * time_counterx 
+            - 0.5 * gravitationx * time_counterx * time_counterx;
+
+            // sphereRotatorx.position.z = bottom_position_x + initial_speedx * timex_counterx 
+            // - 0.5 * gravitationx * timex_counterx * timex_counterx;
+        }
+
+        time_counter += time_step;
+        time_counterx += time_step;
+        // timex_counter = time_counter - 0.91;
+        // timex_counterx = time_counterx - 0.91;
+
     }
     
     
